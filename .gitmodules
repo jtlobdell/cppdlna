@@ -1,0 +1,3 @@
+[submodule "ref/readymedia-transcode"]
+	path = ref/readymedia-transcode
+	url = https://bitbucket.org/stativ/readymedia-transcode.git

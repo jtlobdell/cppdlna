@@ -1,0 +1,38 @@
+cmake_minimum_required (VERSION 3.1)
+
+set(PROJECT_NAME cppdlna)
+
+project(${PROJECT_NAME})
+set(EXECUTABLE_NAME ${PROJECT_NAME})
+
+set(CMAKE_CXX_STANDARD 11)
+
+include_directories(inc)
+add_definitions(
+	-Wall
+	-Werror
+)
+
+# Find all the required external libs
+find_package(Boost 1.68.0 REQUIRED COMPONENTS system)
+
+# Check for deviations from the happy path.
+# Report each library that wasn't found.
+if (NOT Boost_FOUND)
+   message(SEND_ERROR "Could not find version of Boost >= 1.68.0.")
+   set(ERROR_MISSING_LIB TRUE)
+endif()
+
+# If any libraries were not found then it's time to quit
+if (ERROR_MISSING_LIB)
+   message(FATAL_ERROR "One or more required packages not found.")
+endif()
+
+# Everything looks good, so proceed with generation.
+include_directories(
+	${Boost_INCLUDE_DIRS}
+)
+
+add_subdirectory(src)
+add_executable(${PROJECT_NAME} ${SOURCES})
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} pthread)
