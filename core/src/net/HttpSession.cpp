@@ -83,6 +83,23 @@ void HttpSession::process_head()
 
 void HttpSession::process_post()
 {
+    // upnphttp.c, L684
+    // executes the SOAP query if it is possible
+    std::string soapAction = request.base["SOAPAction"];
+    if (soapAction != "") {
+        // process SOAP action
+        // upnpsoap.c L1937-1995
+        try {
+            // get the functor
+            // ftor = soapMethods.at(soapAction);
+            // call it
+            // ftor()
+        } catch (std::out_of_range&) {
+            // error 400 bad request, unknown SOAPAction
+        }
+    } else {
+        // error 400 bad request, no SOAPAction in HTTP headers
+    }
 }
 
 void HttpSession::process_subscribe()

@@ -1,4 +1,6 @@
 add_subdirectory(net)
+add_subdirectory(config)
+add_subdirectory(log)
 
 set(SOURCES
 	${SOURCES}

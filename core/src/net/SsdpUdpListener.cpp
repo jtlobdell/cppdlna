@@ -1,12 +1,22 @@
 #include <cppdlna/net/SsdpUdpListener.hpp>
+#include <cppdlna/config/Configuration.hpp>
 
 namespace net {
 namespace ssdp {
 
+namespace asio = boost::asio;
+namespace ip = boost::asio::ip;
+namespace udp = boost::asio::ip::udp;
+
+
 UdpListener::UdpListener(boost::asio::io_context& io_context)
-    : socket(io_context, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), 1900))
+    : socket(io_context,
+             udp::endpoint
+             (
+                 ip::address::make_address(config::getSetting("interface")),
+                 std::stoul(config::getSetting("udpListenerPort"))
+             ))                 
 {
-    // to-do: specific interface? different port? ipv6?
 }
 
 void UdpListener::run()
@@ -30,6 +40,7 @@ void UdpListener::startReceive()
 
 void UdpListener::handleReceive()
 {
+    
 }
 
 void UdpListener::handleSend()
