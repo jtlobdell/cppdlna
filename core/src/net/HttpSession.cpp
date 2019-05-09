@@ -1,14 +1,35 @@
 #include <cppdlna/net/HttpSession.hpp>
+#include <cppdlna/upnp/Soap.hpp>
+#include <map>
+#include <string>
+#include <functional>
+
 
 namespace ip = boost::asio::ip;
 namespace tcp = boost::asio::ip::tcp;
 namespace http = boost::beast::http;
+namespace soap = cppdlna::upnp::soap;
 
+namespace cppdlna {
 namespace net {
 
 HttpSession::HttpSession(tcp::socket s)
     : socket(std::move(s))
 {
+    soapMethods = {
+        {"QueryStateVariable", soap::queryStateVariable},
+        {"Browse", soap::browse},
+        {"GetSearchCapabilities", soap::getSearchCapabilities},
+        {"GetSortCapabilities", soap::getSortCapabilities},
+        {"GetSystemUpdateID", soap::getSystemUpdateId},
+        {"GetProtocolInfo", soap::getProtocolInfo},
+        {"GetCurrentConnectionIDs", soap::getCurrentConnectionIds},
+        {"GetCurrentConnectionInfo", soap::getCurrentConnectionInfo},
+        {"IsAuthorized", soap::isAuthorized},
+        {"RegisterDevice", soap::registerDevice},
+        {"X_GetFeatureList", soap::x_getFeatureList},
+        {"X_SetBookmark", soap::x_setBookmark}
+    };
 }
 
 void HttpSession::start()
@@ -75,6 +96,7 @@ void HttpSession::process_request()
 
 void HttpSession::process_get()
 {
+    // upnphttp.c L924
 }
 
 void HttpSession::process_head()
@@ -90,12 +112,11 @@ void HttpSession::process_post()
         // process SOAP action
         // upnpsoap.c L1937-1995
         try {
-            // get the functor
-            // ftor = soapMethods.at(soapAction);
-            // call it
-            // ftor()
+            auto ftor = soapMethods.at(soapAction);
+            ftor();
         } catch (std::out_of_range&) {
             // error 400 bad request, unknown SOAPAction
+            
         }
     } else {
         // error 400 bad request, no SOAPAction in HTTP headers
@@ -104,10 +125,14 @@ void HttpSession::process_post()
 
 void HttpSession::process_subscribe()
 {
+    // upnphttp.c L762
+    // subscribe or renew
 }
 
 void HttpSession::process_unsubscribe()
 {
+    // upnphttp.c L815
+    // remove sub
 }
 
 void HttpSession::create_response()
@@ -116,3 +141,5 @@ void HttpSession::create_response()
 }
 
 } // namespace net
+} // namespace cppdlna
+

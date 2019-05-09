@@ -8,7 +8,6 @@ namespace asio = boost::asio;
 namespace ip = boost::asio::ip;
 namespace udp = boost::asio::ip::udp;
 
-
 UdpListener::UdpListener(boost::asio::io_context& io_context)
     : socket(io_context,
              udp::endpoint
@@ -21,7 +20,8 @@ UdpListener::UdpListener(boost::asio::io_context& io_context)
 
 void UdpListener::run()
 {
-    startReceive();
+    // advertise
+    startReceive(); // handle searches
 }
 
 void UdpListener::startReceive()
@@ -40,15 +40,18 @@ void UdpListener::startReceive()
 
 void UdpListener::handleReceive()
 {
-    // process ssdp request
-    // minissdp.c L475
-    // check buffer for different ssdp queries
-    // NOTIFY
-    // - seems to be client notifying server of its details.
-    // - parse details from packet, associate net details with client details?
+    // see: 1.3.2 Search request with M-SEARCH
     // M-SEARCH
-    // - ???
-    // maybe that's it. need standards/ssdp specifications
+    // - control point searching the network for devices
+    // - requests of this method have no body
+    // - TTL for this IP packet should default to 2 and should be configurable
+    // - Response outlined in 1.3.3 Search response
+
+    switch (reqiest.method()) {
+        case http::verb::m_search: // doubt this exists...
+            break;
+            
+    }
 }
 
 void UdpListener::handleSend()
