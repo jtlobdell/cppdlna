@@ -12,13 +12,14 @@ namespace {
 
 std::map<std::string, std::string> defaults =
 {
-    {"udpListenerPort", "1900"},
-    {"interface", "0.0.0.0"}
+    {"interface", "0.0.0.0"},
+    {"ssdp.port", "1900"},
+    {"ssdp.advertisement.age", "1800"}
 } // std::map defaults
 
 } // anonymous namespace
 
-std::string getDefault(std::string settingName)
+std::string get(std::string settingName)
 {
     try {
         return defauts.at(settingName);

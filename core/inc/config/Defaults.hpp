@@ -6,7 +6,7 @@
 namespace config {
 namespace defaults {
 
-std::string getDefault(std::string);
+std::string get(std::string);
 
 } // namespace defaults
 } // namespace config

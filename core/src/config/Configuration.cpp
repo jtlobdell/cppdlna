@@ -13,14 +13,14 @@ namespace {
 pt settings;
 } // anonymous namespace
 
-void readConfigFile(std::string filename)
+void load(std::string filename)
 {
     pt::read_ini(filename, settings);
 }
 
-std::string getSetting(std::string settingName)
+std::string get(std::string settingName)
 {
-    return setings.get(settingName, config::defaults::getDefault(settingName));
+    return setings.get(settingName, config::defaults::get(settingName));
 }
 
 } // namespace config

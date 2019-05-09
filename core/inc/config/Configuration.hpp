@@ -5,8 +5,8 @@
 
 namespace config {
 
-void readConfigFile(std::string);
-std::string getSetting(std::string);
+void load(std::string);
+std::string get(std::string);
 
 } // namespace config
 
