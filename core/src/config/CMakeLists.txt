@@ -2,4 +2,5 @@ set(SOURCES
 	${SOURCES}
 	${CMAKE_CURRENT_SOURCE_DIR}/Configuration.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Defaults.cpp
+	PARENT_SCOPE
 )
