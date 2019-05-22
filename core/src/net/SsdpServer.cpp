@@ -23,13 +23,12 @@ SsdpServer::SsdpServer(boost::asio::io_context& io_context)
                           ip::make_address(config::get("interface")),
                           std::stoul(config::get("udpListenerPort"))
                       )),
-      advertiser_stream(io_context)
-      /*
+      advertiser_stream(io_context,
                         udp::endpoint
                         (
-                            ip::make_address(config.get("ssdp.advertisement.address")),
+                            ip::make_address(config::get("ssdp.advertisement.address")),
                             std::stoul(config::get("ssdp.advertisement.port"))
-                            ))*/
+                        ))
 {
 }
 
