@@ -35,8 +35,7 @@ void setLogFile(std::string filename)
     boost::log::add_file_log(
         filename,
         boost::log::keywords::format = "[%TimeStamp%] [%Severity%]: %Message%"
-    );
-    
+    );    
 }
 
 void trace(std::string msg)

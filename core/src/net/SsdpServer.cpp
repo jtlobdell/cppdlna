@@ -1,17 +1,20 @@
 #include <cppdlna/net/SsdpServer.hpp>
 #include <cppdlna/config/Configuration.hpp>
 #include <queue>
-#include <chrono>
-#include <boost/thread/thread.hpp>
-
-namespace net {
+#include <boost/thread.hpp> // boost threads are interruptible, std threads aren't
+#include <boost/chrono.hpp> // required by boost threads
+#include <boost/beast/core.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/asio.hpp>
 
 namespace asio = boost::asio;
 namespace ip = boost::asio::ip;
-namespace udp = boost::asio::ip::udp;
-using udp_stream = http::basic_stream<udp>;
+using udp = boost::asio::ip::udp;
+namespace http = boost::beast::http;
+using udp_stream = boost::beast::basic_stream<udp>;
 
-// http over udp with beast?
+
+namespace net {
 
 SsdpServer::SsdpServer(boost::asio::io_context& io_context)
     : listener_socket(io_context,
@@ -20,18 +23,19 @@ SsdpServer::SsdpServer(boost::asio::io_context& io_context)
                           ip::make_address(config::get("interface")),
                           std::stoul(config::get("udpListenerPort"))
                       )),
-      advertiser_stream(io_context,
+      advertiser_stream(io_context)
+      /*
                         udp::endpoint
                         (
                             ip::make_address(config.get("ssdp.advertisement.address")),
                             std::stoul(config::get("ssdp.advertisement.port"))
-                        ).protocol())
+                            ))*/
 {
 }
 
 void SsdpServer::run()
 {
-    advertiser_thread = boost::thread(startAdvertise);
+    advertiser_thread = boost::thread(boost::bind(&SsdpServer::startAdvertise, this));
     startReceive(); // handle searches
 }
 
@@ -54,12 +58,11 @@ void SsdpServer::startAdvertise()
     // - two discovery messages for each embedded device
     // - one for each service type in each device
 
-    udp_stream multicast_stream = udp_stream();
-
-    http::header<true> root1, root2, root3, emb1, emb2, svc;
+    http::request<http::string_body> root1, root2, root3, emb1, emb2, svc;
     std::string exp_str = config::get("ssdp.advertisement.age");
-    unsigned int exp_uint = std::stoul(exp_uint);
-    
+    unsigned int exp_uint = std::stoul(exp_str);
+
+    root1.clear();
     root1.method(http::verb::notify);
     root1.target("*");
     // note -- newly constructed headers use HTTP/1.1 by default, so we don't need to set it here.
@@ -117,7 +120,7 @@ void SsdpServer::startAdvertise()
     unsigned int initial_discoveries = std::stoul(config::get("ssdp.advertisement.initial_discoveries"));
     unsigned int initial_discoveries_spacing = std::stoul(config::get("ssdp.advertisement.initial_discoveries_spacing_ms"));
     for (unsigned int i = 1; i < initial_discoveries; ++i) {
-        boost::this_thread::sleep_for(std::chrono::milliseconds(initial_discoveries_spacing));
+        boost::this_thread::sleep_for(boost::chrono::milliseconds(initial_discoveries_spacing));
         http::write(advertiser_stream, root1); // delay in between these?
         http::write(advertiser_stream, root2);
         http::write(advertiser_stream, root3);
@@ -136,14 +139,15 @@ void SsdpServer::startAdvertise()
     // network traffic
 
     // create a queue of messages and when to re-send advertisements
-    std::queue<std::pair<http::header<true>, std::chrono::system_clock::time_point>> ad_q;
-    unsigned int spacing = exp_uint / 12; // half the expiration time divided by 6 ads
-    ad_q.push_back(std::make_pair(root1, now+spacing*1));
-    ad_q.push_back(std::make_pair(root2, now+spacing*2));
-    ad_q.push_back(std::make_pair(root3, now+spacing*3));
-    ad_q.push_back(std::make_pair(emb1, now+spacing*4));
-    ad_q.push_back(std::make_pair(emb2, now+spacing*5));
-    ad_q.push_back(std::make_pair(svc, now+spacking*6));
+    std::queue<std::pair<http::request<http::string_body>, boost::chrono::system_clock::time_point>> ad_q;
+    auto spacing = boost::chrono::seconds(exp_uint) / 12; // half the expiration time divided by 6 ads
+    auto now = boost::chrono::system_clock::now();
+    ad_q.push(std::make_pair(root1, now+spacing*1));
+    ad_q.push(std::make_pair(root2, now+spacing*2));
+    ad_q.push(std::make_pair(root3, now+spacing*3));
+    ad_q.push(std::make_pair(emb1, now+spacing*4));
+    ad_q.push(std::make_pair(emb2, now+spacing*5));
+    ad_q.push(std::make_pair(svc, now+spacing*6));
 
     // re-send advertisements until terminated (via boost::thread::interrupt)
     try {
@@ -152,9 +156,9 @@ void SsdpServer::startAdvertise()
             ad_q.pop();
             auto h = p.first;
             auto t = p.second;
-            boost::this_tread::sleep_until(t);
+            boost::this_thread::sleep_until(t);
             http::write(advertiser_stream, h);
-            auto next_time = std::chrono::system_clock::now() + std::chrono::seconds(exp_uint/2);
+            auto next_time = boost::chrono::system_clock::now() + boost::chrono::seconds(exp_uint/2);
             ad_q.push(std::make_pair(h, next_time));
         }
     } catch (boost::thread_interrupted&) {
@@ -169,35 +173,35 @@ void SsdpServer::startAdvertise()
     emb2.set("NTS", "ssdp:byebye");
     svc.set("NTS", "ssdp:byebye");
 
-    root1.clear("CACHE-CONTROL");
-    root1.clear("LOCATION");
-    root1.clear("SERVER");
-    root1.clear("SEARCHPORT.UPNP.ORG");
+    root1.erase("CACHE-CONTROL");
+    root1.erase("LOCATION");
+    root1.erase("SERVER");
+    root1.erase("SEARCHPORT.UPNP.ORG");
     
-    root2.clear("CACHE-CONTROL");
-    root2.clear("LOCATION");
-    root2.clear("SERVER");
-    root2.clear("SEARCHPORT.UPNP.ORG");
+    root2.erase("CACHE-CONTROL");
+    root2.erase("LOCATION");
+    root2.erase("SERVER");
+    root2.erase("SEARCHPORT.UPNP.ORG");
     
-    root3.clear("CACHE-CONTROL");
-    root3.clear("LOCATION");
-    root3.clear("SERVER");
-    root3.clear("SEARCHPORT.UPNP.ORG");
+    root3.erase("CACHE-CONTROL");
+    root3.erase("LOCATION");
+    root3.erase("SERVER");
+    root3.erase("SEARCHPORT.UPNP.ORG");
 
-    emb1.clear("CACHE-CONTROL");
-    emb1.clear("LOCATION");
-    emb1.clear("SERVER");
-    emb1.clear("SEARCHPORT.UPNP.ORG");
+    emb1.erase("CACHE-CONTROL");
+    emb1.erase("LOCATION");
+    emb1.erase("SERVER");
+    emb1.erase("SEARCHPORT.UPNP.ORG");
     
-    emb2.clear("CACHE-CONTROL");
-    emb2.clear("LOCATION");
-    emb2.clear("SERVER");
-    emb2.clear("SEARCHPORT.UPNP.ORG");
+    emb2.erase("CACHE-CONTROL");
+    emb2.erase("LOCATION");
+    emb2.erase("SERVER");
+    emb2.erase("SEARCHPORT.UPNP.ORG");
 
-    svc.clear("CACHE-CONTROL");
-    svc.clear("LOCATION");
-    svc.clear("SERVER");
-    svc.clear("SEARCHPORT.UPNP.ORG");
+    svc.erase("CACHE-CONTROL");
+    svc.erase("LOCATION");
+    svc.erase("SERVER");
+    svc.erase("SEARCHPORT.UPNP.ORG");
 
     http::write(advertiser_stream, root1); // delay in between these?
     http::write(advertiser_stream, root2);
@@ -217,15 +221,19 @@ void SsdpServer::startAdvertise()
 
 void SsdpServer::startReceive()
 {
-    socket.async_receive_from(
-        boost::asio::buffer(rx_buffer),
+    listener_socket.async_receive_from(
+        buffer,
         remote,
+        [this](boost::system::error_code, std::size_t) {
+            handleReceive();
+        }
+        /*
         boost::bind(
-            &UdpListener::handleReceive,
+            &SsdpServer::handleReceive,
             this,
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred
-        )
+            )*/
     );
 }
 
@@ -245,6 +253,8 @@ void SsdpServer::handleReceive()
             break;
             
     }
+
+    startReceive();
 }
 
 void SsdpServer::handleSend()
