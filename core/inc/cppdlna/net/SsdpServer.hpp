@@ -24,7 +24,7 @@ public:
 private:
     void startAdvertise();
     void startReceive();
-    void handleReceive();
+    void handleReceive(const boost::system::error_code&, std::size_t);
     void handleSearch();
     void handleSend();
 

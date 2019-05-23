@@ -223,13 +223,13 @@ void SsdpServer::startReceive()
     listener_socket.async_receive_from(
         buffer,
         remote,
-        [this](boost::system::error_code, std::size_t) {
-            handleReceive();
+        [this](const boost::system::error_code& ec, std::size_t size) {
+            handleReceive(ec, size);
         }
     );
 }
 
-void SsdpServer::handleReceive()
+void SsdpServer::handleReceive(const boost::system::error_code& ec, std::size_t size)
 {
     // see: 1.3.2 Search request with M-SEARCH
     // M-SEARCH
