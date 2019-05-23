@@ -16,6 +16,21 @@ using udp_stream = boost::beast::basic_stream<udp>;
 
 namespace net {
 
+namespace {
+
+struct search_request {
+    std::string host;
+    std::string man;
+    std::string st;
+    std::string mx;
+    std::string cpfn;
+    std::string user_agent;
+    std::string tcp_port;
+    std::string cpuuid;
+};
+
+} // anonymous namespace
+
 SsdpServer::SsdpServer(boost::asio::io_context& io_context)
     : listener_socket(io_context,
                       udp::endpoint
@@ -263,13 +278,13 @@ void SsdpServer::handleSearch()
     }
 
     bool is_multicast = remote.address().is_multicast();
+    search_request sr;
 
     // fields required for both multicast and unicast
     try {
-        // required fields
-        request.at("HOST");
-        request.at("MAN");
-        request.at("ST");
+        sr.host = request.at("HOST");
+        sr.man = request.at("MAN");
+        sr.st = request.at("ST");
     } catch (std::out_of_range&) {
         return;
     }
@@ -277,29 +292,25 @@ void SsdpServer::handleSearch()
     // fields required only for multicast
     if (is_multicast) {
         try {
-            request.at("MX");
-            request.at("CPFN.UPNP.ORG");
+            sr.mx = request.at("MX");
+            sr.cpfn = request.at("CPFN.UPNP.ORG");
         } catch (std::out_of_range&) {
             return;
         }
     }
 
     // fields allowed for both multicast and unicast
-    try {
-        request.at("USER-AGENT");
-    } catch (std::out_of_range&) {
+    if (auto it = request.find("USER-AGENT"); it != request.end()) {
+        sr.user_agent = *it;
     }
-
+    
     // fields allowed only for multicast
     if (is_multicast) {
-        try {
-            request.at("TCPPORT.UPNP.ORG");
-        } catch (std::out_of_range&) {
+        if (auto it = request.find("TCPPORT.UPNP.ORG"); it != request.end()) {
+            sr.tcp_port = *it;
         }
-
-        try {
-            request.at("CPUUID.UPNP.ORG");
-        } catch (std::out_of_range&) {
+        if (auto it = request.find("CPUUID.UPNP.ORG"); it != request.end()) {
+            sr.cpuuid = *it;
         }
     }
 
