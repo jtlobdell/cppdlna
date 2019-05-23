@@ -20,8 +20,8 @@ SsdpServer::SsdpServer(boost::asio::io_context& io_context)
     : listener_socket(io_context,
                       udp::endpoint
                       (
-                          ip::make_address(config::get("interface")),
-                          std::stoul(config::get("udpListenerPort"))
+                          ip::make_address(config::get("ssdp.search.interface")),
+                          std::stoul(config::get("ssdp.search.port"))
                       )),
       advertiser_stream(io_context,
                         udp::endpoint

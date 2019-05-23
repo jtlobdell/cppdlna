@@ -12,8 +12,8 @@ namespace {
 
 std::map<std::string, std::string> defaults =
 {
-    {"interface", "0.0.0.0"},
-    {"ssdp.port", "1900"},
+    {"ssdp.search.interface", "0.0.0.0"},
+    {"ssdp.search.port", "1900"},
     {"ssdp.advertisement.address", "239.255.255.250"},
     {"ssdp.advertisement.port", "1900"},
     {"ssdp.advertisement.age", "1800"},
