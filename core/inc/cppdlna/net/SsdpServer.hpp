@@ -25,6 +25,7 @@ private:
     void startAdvertise();
     void startReceive();
     void handleReceive();
+    void handleSearch();
     void handleSend();
 
     udp::socket listener_socket;

@@ -240,13 +240,70 @@ void SsdpServer::handleReceive()
 
     switch (request.method()) {
         case http::verb::msearch:
+            handleSearch();
             break;
         default:
+            // not what we're looking for
             break;
-            
     }
 
     startReceive();
+}
+
+void SsdpServer::handleSearch()
+{
+    // ensure request line is valid
+    if (request.method() != http::verb::msearch || request.target() != "*" || request.version() != 11) {
+        return;
+    }
+
+    // request should not have a body
+    if (false /*request has a body*/) {
+        return;
+    }
+
+    bool is_multicast = remote.address().is_multicast();
+
+    // fields required for both multicast and unicast
+    try {
+        // required fields
+        request.at("HOST");
+        request.at("MAN");
+        request.at("ST");
+    } catch (std::out_of_range&) {
+        return;
+    }
+
+    // fields required only for multicast
+    if (is_multicast) {
+        try {
+            request.at("MX");
+            request.at("CPFN.UPNP.ORG");
+        } catch (std::out_of_range&) {
+            return;
+        }
+    }
+
+    // fields allowed for both multicast and unicast
+    try {
+        request.at("USER-AGENT");
+    } catch (std::out_of_range&) {
+    }
+
+    // fields allowed only for multicast
+    if (is_multicast) {
+        try {
+            request.at("TCPPORT.UPNP.ORG");
+        } catch (std::out_of_range&) {
+        }
+
+        try {
+            request.at("CPUUID.UPNP.ORG");
+        } catch (std::out_of_range&) {
+        }
+    }
+
+    // what about additional / unnecessary fields? ignore for now...
 }
 
 void SsdpServer::handleSend()
