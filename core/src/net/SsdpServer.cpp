@@ -226,13 +226,6 @@ void SsdpServer::startReceive()
         [this](boost::system::error_code, std::size_t) {
             handleReceive();
         }
-        /*
-        boost::bind(
-            &SsdpServer::handleReceive,
-            this,
-            boost::asio::placeholders::error,
-            boost::asio::placeholders::bytes_transferred
-            )*/
     );
 }
 
