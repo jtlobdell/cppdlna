@@ -3,11 +3,11 @@
 
 #include <string>
 
-namespace config {
+namespace cppdlna::config {
 
 void load(std::string);
 std::string get(std::string);
 
-} // namespace config
+} // namespace cppdlna::config
 
 #endif

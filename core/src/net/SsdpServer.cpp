@@ -15,7 +15,7 @@ namespace http = boost::beast::http;
 using udp_stream = boost::beast::basic_stream<udp>;
 
 
-namespace net {
+namespace cppdlna::net {
 
 namespace {
 
@@ -316,4 +316,4 @@ void SsdpServer::handleSend()
 {
 }
 
-} // namespace net
+} // namespace cppdlna::net

@@ -5,8 +5,7 @@
 #include <cppdlna/config/Defaults.hpp>
 #include <cppdlna/log/Log.hpp>
 
-namespace config {
-namespace defaults {
+namespace cppdlna::config::defaults {
 
 namespace {
 
@@ -33,5 +32,4 @@ std::string get(std::string settingName)
     }
 }
 
-} // namespace defaults
-} // namespace config
+} // namespace cppdlna::config::defaults

@@ -6,6 +6,8 @@
 
 namespace pt = boost::property_tree;
 
+namespace cppdlna {
+
 enum SoapFaultCode {
     VersionMismatch,
     MustUnderstand,
@@ -30,5 +32,7 @@ private:
     std::string faultActor;
     pt::ptree* detail;
 };
+
+} // namespace cppdlna
 
 #endif

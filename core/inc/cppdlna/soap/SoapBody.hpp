@@ -7,6 +7,8 @@
 
 namespace pt = boost::property_tree;
 
+namespace cppdlna {
+
 class SoapBody
 {
 public:
@@ -18,5 +20,7 @@ public:
 private:
     std::vector<pt::ptree*> elements;
 };
+
+} // namespace cppdlna
 
 #endif

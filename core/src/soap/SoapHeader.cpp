@@ -8,6 +8,8 @@
 
 namespace pt = boost::property_tree;
 
+namespace cppdlna {
+
 SoapHeader::SoapHeader()
 {
 }
@@ -42,3 +44,5 @@ std::string SoapHeader::to_string()
     pt::write_xml(ss, tree);
     return ss.str();
 }
+
+} // namespace cppdlna

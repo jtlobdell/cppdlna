@@ -11,8 +11,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
-namespace cppdlna {
-namespace log {
+namespace cppdlna::log {
 
 namespace {
 boost::log::sources::severity_logger<boost::log::trivial::severity_level> lg;
@@ -101,5 +100,4 @@ void fatal(std::string msg, const std::exception& e)
 	BOOST_LOG_SEV(lg, boost::log::trivial::fatal) << e.what();
 }
 
-} // namespace log
-} // namespace cppdlna
+} // namespace cppdlna::log

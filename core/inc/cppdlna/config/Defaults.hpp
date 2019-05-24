@@ -3,12 +3,10 @@
 
 #include <string>
 
-namespace config {
-namespace defaults {
+namespace cppdlna::config::defaults {
 
 std::string get(std::string);
 
-} // namespace defaults
-} // namespace config
+} // namespace cppdlna::config::defaults
 
 #endif

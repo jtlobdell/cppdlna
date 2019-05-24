@@ -8,6 +8,8 @@
 
 namespace pt = boost::property_tree;
 
+namespace cppdlna {
+
 class SoapEnvelope
 {
 public:
@@ -19,5 +21,7 @@ private:
     SoapBody body;
     SoapHeader header;
 };
+
+} // namespace cppdlna
 
 #endif

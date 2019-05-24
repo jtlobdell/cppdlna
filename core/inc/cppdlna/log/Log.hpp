@@ -3,8 +3,7 @@
 
 #include <string>
 
-namespace cppdlna {
-namespace log {
+namespace cppdlna::log {
 
 void init();
 void setLogFile(std::string);
@@ -22,7 +21,6 @@ void fatal(std::string);
 void fatal(const std::exception&);
 void fatal(std::string, const std::exception&);
 
-} // namespace log
-} // namespace cppdlna
+} // namespace cppdlna::log
 
 #endif

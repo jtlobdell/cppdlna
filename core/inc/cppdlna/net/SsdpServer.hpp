@@ -14,7 +14,7 @@ using udp = boost::asio::ip::udp;
 namespace http = boost::beast::http;
 using udp_stream = boost::beast::basic_stream<udp>;
 
-namespace net {
+namespace cppdlna::net {
 
 // Listen for SSDP UDP packets sent on 239.255.255.250, port 1900
 class SsdpServer
@@ -40,6 +40,6 @@ private:
     boost::thread advertiser_thread;
 }; // class SsdpServer
 
-} // namespace net
+} // namespace cppdlna::net
 
 #endif

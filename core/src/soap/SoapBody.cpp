@@ -8,6 +8,8 @@
 
 namespace pt = boost::property_tree;
 
+namespace cppdlna {
+
 SoapBody::SoapBody()
 {
 }
@@ -37,3 +39,5 @@ std::string SoapBody::to_string()
     pt::write_xml(ss, tree);
     return ss.str();
 }
+
+} // namespace cppdlna

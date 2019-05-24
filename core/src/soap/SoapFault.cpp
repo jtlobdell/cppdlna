@@ -5,6 +5,8 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include "SoapFault.hpp"
 
+namespace cppdlna {
+
 namespace {
 
 std::string faultCodeToString(SoapFaultCode faultCode)
@@ -106,3 +108,4 @@ int main(int argc, char* argv[])
 }
 */
 
+} // namespace cppdlna
