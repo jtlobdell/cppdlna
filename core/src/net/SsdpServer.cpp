@@ -73,7 +73,7 @@ void SsdpServer::startAdvertise()
     // - two discovery messages for each embedded device
     // - one for each service type in each device
 
-    http::request<http::string_body> root1, root2, root3, emb1, emb2, svc;
+    http::request<http::empty_body> root1, root2, root3, emb1, emb2, svc;
     std::string exp_str = config::get("ssdp.advertisement.age");
     unsigned int exp_uint = std::stoul(exp_str);
 
@@ -154,7 +154,7 @@ void SsdpServer::startAdvertise()
     // network traffic
 
     // create a queue of messages and when to re-send advertisements
-    std::queue<std::pair<http::request<http::string_body>, boost::chrono::system_clock::time_point>> ad_q;
+    std::queue<std::pair<http::request<http::empty_body>, boost::chrono::system_clock::time_point>> ad_q;
     auto spacing = boost::chrono::seconds(exp_uint) / 12; // half the expiration time divided by 6 ads
     auto now = boost::chrono::system_clock::now();
     ad_q.push(std::make_pair(root1, now+spacing*1));
