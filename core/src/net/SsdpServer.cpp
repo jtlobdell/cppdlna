@@ -19,14 +19,14 @@ namespace net {
 namespace {
 
 struct search_request {
-    std::string host;
-    std::string man;
-    std::string st;
-    std::string mx;
-    std::string cpfn;
-    std::string user_agent;
-    std::string tcp_port;
-    std::string cpuuid;
+    boost::string_view host;
+    boost::string_view man;
+    boost::string_view st;
+    boost::string_view mx;
+    boost::string_view cpfn;
+    boost::string_view user_agent;
+    boost::string_view tcp_port;
+    boost::string_view cpuuid;
 };
 
 } // anonymous namespace
@@ -300,18 +300,12 @@ void SsdpServer::handleSearch()
     }
 
     // fields allowed for both multicast and unicast
-    if (auto it = request.find("USER-AGENT"); it != request.end()) {
-        sr.user_agent = *it;
-    }
+    sr.user_agent = request["USER-AGENT"];
     
     // fields allowed only for multicast
     if (is_multicast) {
-        if (auto it = request.find("TCPPORT.UPNP.ORG"); it != request.end()) {
-            sr.tcp_port = *it;
-        }
-        if (auto it = request.find("CPUUID.UPNP.ORG"); it != request.end()) {
-            sr.cpuuid = *it;
-        }
+        sr.tcp_port = request["TCPPORT.UPNP.ORG"];
+        sr.cpuuid = request["CPUUID.UPNP.ORG"];
     }
 
     // what about additional / unnecessary fields? ignore for now...
