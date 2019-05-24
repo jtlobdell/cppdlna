@@ -3,6 +3,7 @@
 #include <queue>
 #include <boost/thread.hpp> // boost threads are interruptible, std threads aren't
 #include <boost/chrono.hpp> // required by boost threads
+#include <string_view>
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/asio.hpp>
@@ -19,14 +20,14 @@ namespace net {
 namespace {
 
 struct search_request {
-    boost::string_view host;
-    boost::string_view man;
-    boost::string_view st;
-    boost::string_view mx;
-    boost::string_view cpfn;
-    boost::string_view user_agent;
-    boost::string_view tcp_port;
-    boost::string_view cpuuid;
+    std::string_view host;
+    std::string_view man;
+    std::string_view st;
+    std::string_view mx;
+    std::string_view cpfn;
+    std::string_view user_agent;
+    std::string_view tcp_port;
+    std::string_view cpuuid;
 };
 
 } // anonymous namespace

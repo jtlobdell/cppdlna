@@ -1,6 +1,8 @@
 #ifndef CPPDLNA_NET_SSDP_UDP_LISTENER_HPP
 #define CPPDLNA_NET_SSDP_UDP_LISTENER_HPP
 
+#define BOOST_BEAST_USE_STD_STRING_VIEW
+
 #include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
