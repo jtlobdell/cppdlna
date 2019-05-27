@@ -31,7 +31,6 @@ include_directories(
 add_definitions(
 	-Wall
 	-Werror
-	-Wfatal-errors
 	-DBOOST_LOG_DYN_LINK
 )
 

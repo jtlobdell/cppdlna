@@ -11,10 +11,10 @@ namespace {
 
 std::map<std::string, std::string> defaults =
 {
-    {"ssdp.search.interface", "0.0.0.0"},
-    {"ssdp.search.port", "1900"},
-    {"ssdp.advertisement.address", "239.255.255.250"},
-    {"ssdp.advertisement.port", "1900"},
+    {"ssdp.interface", "192.168.1.100"},
+    {"ssdp.port", "1900"},
+    {"ssdp.advertisement.remote_address", "239.255.255.250"},
+    {"ssdp.advertisement.remote_port", "1900"},
     {"ssdp.advertisement.age", "1800"},
     {"ssdp.advertisement.initial_discoveries", "3"},
     {"ssdp.advertisement.initial_discoveries_spacing_ms", "200"}

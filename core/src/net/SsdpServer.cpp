@@ -1,5 +1,7 @@
 #include <cppdlna/net/SsdpServer.hpp>
 #include <cppdlna/config/Configuration.hpp>
+#include <cppdlna/net/HttpUdp.hpp>
+#include <cppdlna/log/Log.hpp>
 #include <queue>
 #include <boost/thread.hpp> // boost threads are interruptible, std threads aren't
 #include <boost/chrono.hpp> // required by boost threads
@@ -12,7 +14,6 @@ namespace asio = boost::asio;
 namespace ip = boost::asio::ip;
 using udp = boost::asio::ip::udp;
 namespace http = boost::beast::http;
-using udp_stream = boost::beast::basic_stream<udp>;
 
 
 namespace cppdlna::net {
@@ -33,19 +34,16 @@ struct search_request {
 } // anonymous namespace
 
 SsdpServer::SsdpServer(boost::asio::io_context& io_context)
-    : listener_socket(io_context,
-                      udp::endpoint
-                      (
-                          ip::make_address(config::get("ssdp.search.interface")),
-                          std::stoul(config::get("ssdp.search.port"))
-                      )),
-      advertiser_stream(io_context,
-                        udp::endpoint
-                        (
-                            ip::make_address(config::get("ssdp.advertisement.address")),
-                            std::stoul(config::get("ssdp.advertisement.port"))
-                        ))
+    : ssdp_socket(io_context,
+                  udp::endpoint(
+                      ip::make_address(config::get("ssdp.interface")),
+                      std::stoul(config::get("ssdp.port"))
+                  ))
 {
+    ssdp_socket.connect(udp::endpoint(
+                            ip::make_address(config::get("ssdp.advertisement.remote_address")),
+                            std::stoul(config::get("ssdp.advertisement.remote_port"))
+                        ));
 }
 
 void SsdpServer::run()
@@ -120,12 +118,12 @@ void SsdpServer::startAdvertise()
     // a new UPnP-enabled interface is installed
 
     // sleep(random(0, 100ms));
-    http::write(advertiser_stream, root1); // delay in between these?
-    http::write(advertiser_stream, root2);
-    http::write(advertiser_stream, root3);
-    http::write(advertiser_stream, emb1);
-    http::write(advertiser_stream, emb2);
-    http::write(advertiser_stream, svc);
+    write_message_to_udp(ssdp_socket, root1);
+    write_message_to_udp(ssdp_socket, root2);
+    write_message_to_udp(ssdp_socket, root3);
+    write_message_to_udp(ssdp_socket, emb1);
+    write_message_to_udp(ssdp_socket, emb2);
+    write_message_to_udp(ssdp_socket, svc);
 
     // due to the unreliable nature of udp devices should send the entire
     // set of discovery messages more than once with some delay between
@@ -136,12 +134,12 @@ void SsdpServer::startAdvertise()
     unsigned int initial_discoveries_spacing = std::stoul(config::get("ssdp.advertisement.initial_discoveries_spacing_ms"));
     for (unsigned int i = 1; i < initial_discoveries; ++i) {
         boost::this_thread::sleep_for(boost::chrono::milliseconds(initial_discoveries_spacing));
-        http::write(advertiser_stream, root1); // delay in between these?
-        http::write(advertiser_stream, root2);
-        http::write(advertiser_stream, root3);
-        http::write(advertiser_stream, emb1);
-        http::write(advertiser_stream, emb2);
-        http::write(advertiser_stream, svc);
+        write_message_to_udp(ssdp_socket, root1); // delay in between these?
+        write_message_to_udp(ssdp_socket, root2);
+        write_message_to_udp(ssdp_socket, root3);
+        write_message_to_udp(ssdp_socket, emb1);
+        write_message_to_udp(ssdp_socket, emb2);
+        write_message_to_udp(ssdp_socket, svc);
     }
     
     // in addition, device shall re-send advertisements periodically
@@ -172,7 +170,7 @@ void SsdpServer::startAdvertise()
             auto h = p.first;
             auto t = p.second;
             boost::this_thread::sleep_until(t);
-            http::write(advertiser_stream, h);
+            write_message_to_udp(ssdp_socket, h);
             auto next_time = boost::chrono::system_clock::now() + boost::chrono::seconds(exp_uint/2);
             ad_q.push(std::make_pair(h, next_time));
         }
@@ -218,12 +216,12 @@ void SsdpServer::startAdvertise()
     svc.erase("SERVER");
     svc.erase("SEARCHPORT.UPNP.ORG");
 
-    http::write(advertiser_stream, root1); // delay in between these?
-    http::write(advertiser_stream, root2);
-    http::write(advertiser_stream, root3);
-    http::write(advertiser_stream, emb1);
-    http::write(advertiser_stream, emb2);
-    http::write(advertiser_stream, svc);
+    write_message_to_udp(ssdp_socket, root1); // delay in between these?
+    write_message_to_udp(ssdp_socket, root2);
+    write_message_to_udp(ssdp_socket, root3);
+    write_message_to_udp(ssdp_socket, emb1);
+    write_message_to_udp(ssdp_socket, emb2);
+    write_message_to_udp(ssdp_socket, svc);
 }
 // note udp packets are also bounded in length (as small as 512 bytes)
 // and each discovery message shall fit entirely in a single udp packet
@@ -236,7 +234,7 @@ void SsdpServer::startAdvertise()
 
 void SsdpServer::startReceive()
 {
-    listener_socket.async_receive_from(
+    ssdp_socket.async_receive_from(
         buffer,
         remote,
         [this](const boost::system::error_code& ec, std::size_t size) {

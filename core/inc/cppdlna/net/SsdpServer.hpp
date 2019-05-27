@@ -30,10 +30,8 @@ private:
     void handleSearch();
     void handleSend();
 
-    udp::socket listener_socket;
-    udp_stream advertiser_stream;
+    udp::socket ssdp_socket;
     udp::endpoint remote;
-    //boost::beast::flat_buffer buffer{8192};
     asio::mutable_buffer buffer;
     http::request<http::dynamic_body> request;
     http::response<http::dynamic_body> response;
