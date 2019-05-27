@@ -310,8 +310,4 @@ void SsdpServer::handleSearch()
     // what about additional / unnecessary fields? ignore for now...
 }
 
-void SsdpServer::handleSend()
-{
-}
-
 } // namespace cppdlna::net

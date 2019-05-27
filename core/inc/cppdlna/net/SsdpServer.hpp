@@ -28,7 +28,6 @@ private:
     void startReceive();
     void handleReceive(const boost::system::error_code&, std::size_t);
     void handleSearch();
-    void handleSend();
 
     udp::socket ssdp_socket;
     udp::endpoint remote;
