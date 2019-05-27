@@ -13,7 +13,7 @@ std::map<std::string, std::string> defaults =
 {
     {"ssdp.interface", "192.168.1.100"},
     {"ssdp.port", "1900"},
-    {"ssdp.advertisement.remote_address", "239.255.255.250"},
+    {"ssdp.multicast_address", "239.255.255.250"},
     {"ssdp.advertisement.remote_port", "1900"},
     {"ssdp.advertisement.age", "1800"},
     {"ssdp.advertisement.initial_discoveries", "3"},

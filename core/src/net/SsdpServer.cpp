@@ -31,19 +31,35 @@ struct search_request {
     std::string_view cpuuid;
 };
 
+void print_search_request(search_request const& sr)
+{
+    log::info("received a search request.");
+    log::info("host:       " + std::string(sr.host));
+    log::info("man:        " + std::string(sr.man));
+    log::info("st:         " + std::string(sr.st));
+    log::info("mx:         " + std::string(sr.mx));
+    log::info("cpfn:       " + std::string(sr.cpfn));
+    log::info("user_agent: " + std::string(sr.user_agent));
+    log::info("tcp_port:   " + std::string(sr.tcp_port));
+    log::info("cpuuid:     " + std::string(sr.cpuuid));
+}
+
 } // anonymous namespace
 
 SsdpServer::SsdpServer(boost::asio::io_context& io_context)
-    : ssdp_socket(io_context,
-                  udp::endpoint(
-                      ip::make_address(config::get("ssdp.interface")),
-                      std::stoul(config::get("ssdp.port"))
-                  ))
+    : ssdp_socket(io_context),
+      ssdp_interface(ip::make_address(config::get("ssdp.interface"))),
+      multicast_port(std::stoul(config::get("ssdp.port"))),
+      multicast_addr(ip::make_address(config::get("ssdp.multicast_address"))),
+      tx_remote(multicast_addr, multicast_port)
 {
-    ssdp_socket.connect(udp::endpoint(
-                            ip::make_address(config::get("ssdp.advertisement.remote_address")),
-                            std::stoul(config::get("ssdp.advertisement.remote_port"))
-                        ));
+    // create socket so that multiple may be bound to same addr
+    ssdp_socket.open(udp::endpoint(ssdp_interface, multicast_port).protocol());
+    ssdp_socket.set_option(udp::socket::reuse_address(true));
+    ssdp_socket.bind(udp::endpoint(multicast_addr, multicast_port));
+    // join the multicast group
+    ssdp_socket.set_option(ip::multicast::join_group(multicast_addr.to_v4(), ssdp_interface.to_v4()));
+    ssdp_socket.set_option(ip::multicast::outbound_interface(ssdp_interface.to_v4()));
 }
 
 void SsdpServer::run()
@@ -118,12 +134,12 @@ void SsdpServer::startAdvertise()
     // a new UPnP-enabled interface is installed
 
     // sleep(random(0, 100ms));
-    write_message_to_udp(ssdp_socket, root1);
-    write_message_to_udp(ssdp_socket, root2);
-    write_message_to_udp(ssdp_socket, root3);
-    write_message_to_udp(ssdp_socket, emb1);
-    write_message_to_udp(ssdp_socket, emb2);
-    write_message_to_udp(ssdp_socket, svc);
+    write_message_to_udp(ssdp_socket, root1, tx_remote);
+    write_message_to_udp(ssdp_socket, root2, tx_remote);
+    write_message_to_udp(ssdp_socket, root3, tx_remote);
+    write_message_to_udp(ssdp_socket, emb1, tx_remote);
+    write_message_to_udp(ssdp_socket, emb2, tx_remote);
+    write_message_to_udp(ssdp_socket, svc, tx_remote);
 
     // due to the unreliable nature of udp devices should send the entire
     // set of discovery messages more than once with some delay between
@@ -134,12 +150,12 @@ void SsdpServer::startAdvertise()
     unsigned int initial_discoveries_spacing = std::stoul(config::get("ssdp.advertisement.initial_discoveries_spacing_ms"));
     for (unsigned int i = 1; i < initial_discoveries; ++i) {
         boost::this_thread::sleep_for(boost::chrono::milliseconds(initial_discoveries_spacing));
-        write_message_to_udp(ssdp_socket, root1); // delay in between these?
-        write_message_to_udp(ssdp_socket, root2);
-        write_message_to_udp(ssdp_socket, root3);
-        write_message_to_udp(ssdp_socket, emb1);
-        write_message_to_udp(ssdp_socket, emb2);
-        write_message_to_udp(ssdp_socket, svc);
+        write_message_to_udp(ssdp_socket, root1, tx_remote); // delay in between these?
+        write_message_to_udp(ssdp_socket, root2, tx_remote);
+        write_message_to_udp(ssdp_socket, root3, tx_remote);
+        write_message_to_udp(ssdp_socket, emb1, tx_remote);
+        write_message_to_udp(ssdp_socket, emb2, tx_remote);
+        write_message_to_udp(ssdp_socket, svc, tx_remote);
     }
     
     // in addition, device shall re-send advertisements periodically
@@ -170,7 +186,7 @@ void SsdpServer::startAdvertise()
             auto h = p.first;
             auto t = p.second;
             boost::this_thread::sleep_until(t);
-            write_message_to_udp(ssdp_socket, h);
+            write_message_to_udp(ssdp_socket, h, tx_remote);
             auto next_time = boost::chrono::system_clock::now() + boost::chrono::seconds(exp_uint/2);
             ad_q.push(std::make_pair(h, next_time));
         }
@@ -216,12 +232,12 @@ void SsdpServer::startAdvertise()
     svc.erase("SERVER");
     svc.erase("SEARCHPORT.UPNP.ORG");
 
-    write_message_to_udp(ssdp_socket, root1); // delay in between these?
-    write_message_to_udp(ssdp_socket, root2);
-    write_message_to_udp(ssdp_socket, root3);
-    write_message_to_udp(ssdp_socket, emb1);
-    write_message_to_udp(ssdp_socket, emb2);
-    write_message_to_udp(ssdp_socket, svc);
+    write_message_to_udp(ssdp_socket, root1, tx_remote); // delay in between these?
+    write_message_to_udp(ssdp_socket, root2, tx_remote);
+    write_message_to_udp(ssdp_socket, root3, tx_remote);
+    write_message_to_udp(ssdp_socket, emb1, tx_remote);
+    write_message_to_udp(ssdp_socket, emb2, tx_remote);
+    write_message_to_udp(ssdp_socket, svc, tx_remote);
 }
 // note udp packets are also bounded in length (as small as 512 bytes)
 // and each discovery message shall fit entirely in a single udp packet
@@ -235,8 +251,8 @@ void SsdpServer::startAdvertise()
 void SsdpServer::startReceive()
 {
     ssdp_socket.async_receive_from(
-        buffer,
-        remote,
+        asio::buffer(rx_buf),
+        rx_remote,
         [this](const boost::system::error_code& ec, std::size_t size) {
             handleReceive(ec, size);
         }
@@ -245,45 +261,52 @@ void SsdpServer::startReceive()
 
 void SsdpServer::handleReceive(const boost::system::error_code& ec, std::size_t size)
 {
-    // see: 1.3.2 Search request with M-SEARCH
-    // M-SEARCH
-    // - control point searching the network for devices
-    // - requests of this method have no body
-    // - TTL for this IP packet should default to 2 and should be configurable
-    // - Response outlined in 1.3.3 Search response
+    // attempt to parse buffer to http::message
+    http::message<true, http::empty_body> msg;
+    http::parser<true, http::empty_body> p;
+    boost::system::error_code p_ec;
+    p.put(asio::buffer(rx_buf), p_ec);
+    
+    if (!p_ec) {
+        msg = p.get();
+    
+        // see: 1.3.2 Search request with M-SEARCH
+        // M-SEARCH
+        // - control point searching the network for devices
+        // - requests of this method have no body
+        // - TTL for this IP packet should default to 2 and should be configurable
+        // - Response outlined in 1.3.3 Search response
 
-    switch (request.method()) {
-        case http::verb::msearch:
-            handleSearch();
-            break;
-        default:
-            // not what we're looking for
-            break;
+        switch (msg.method()) {
+            case http::verb::msearch:
+                handleSearch(msg);
+                break;
+            default:
+                // not what we're looking for
+                break;
+        }
+    } else {
+        // failed to parse
     }
 
     startReceive();
 }
 
-void SsdpServer::handleSearch()
+void SsdpServer::handleSearch(http::message<true, http::empty_body> const& msg)
 {
     // ensure request line is valid
-    if (request.method() != http::verb::msearch || request.target() != "*" || request.version() != 11) {
+    if (msg.method() != http::verb::msearch || msg.target() != "*" || msg.version() != 11) {
         return;
     }
 
-    // request should not have a body
-    if (false /*request has a body*/) {
-        return;
-    }
-
-    bool is_multicast = remote.address().is_multicast();
+    bool is_multicast = rx_remote.address().is_multicast();
     search_request sr;
 
     // fields required for both multicast and unicast
     try {
-        sr.host = request.at("HOST");
-        sr.man = request.at("MAN");
-        sr.st = request.at("ST");
+        sr.host = msg.at("HOST");
+        sr.man = msg.at("MAN");
+        sr.st = msg.at("ST");
     } catch (std::out_of_range&) {
         return;
     }
@@ -291,23 +314,25 @@ void SsdpServer::handleSearch()
     // fields required only for multicast
     if (is_multicast) {
         try {
-            sr.mx = request.at("MX");
-            sr.cpfn = request.at("CPFN.UPNP.ORG");
+            sr.mx = msg.at("MX");
+            sr.cpfn = msg.at("CPFN.UPNP.ORG");
         } catch (std::out_of_range&) {
             return;
         }
     }
 
     // fields allowed for both multicast and unicast
-    sr.user_agent = request["USER-AGENT"];
+    sr.user_agent = msg["USER-AGENT"];
     
     // fields allowed only for multicast
     if (is_multicast) {
-        sr.tcp_port = request["TCPPORT.UPNP.ORG"];
-        sr.cpuuid = request["CPUUID.UPNP.ORG"];
+        sr.tcp_port = msg["TCPPORT.UPNP.ORG"];
+        sr.cpuuid = msg["CPUUID.UPNP.ORG"];
     }
 
     // what about additional / unnecessary fields? ignore for now...
+
+    print_search_request(sr);
 }
 
 } // namespace cppdlna::net

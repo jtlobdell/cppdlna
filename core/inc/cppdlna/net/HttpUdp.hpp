@@ -17,7 +17,8 @@ template <
     bool isRequest, typename Body, typename Fields
     >
 void write_message_to_udp(asio::basic_datagram_socket<Protocol, Executor>& sock,
-                          http::message<isRequest, Body, Fields> const& msg)
+                          http::message<isRequest, Body, Fields> const& msg,
+                          typename Protocol::endpoint const& remote)
 {
     boost::system::error_code ec;
     asio::streambuf b;
@@ -55,7 +56,7 @@ void write_message_to_udp(asio::basic_datagram_socket<Protocol, Executor>& sock,
     }
 
     // buf now contains the serialized message, so send it.
-    sock.send(b.data());
+    sock.send_to(b.data(), remote);
 }
 
 } // namespace cppdlna::net
