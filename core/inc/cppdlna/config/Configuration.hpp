@@ -7,6 +7,7 @@ namespace cppdlna::config {
 
 void load(std::string);
 std::string get(std::string);
+bool get_bool(std::string);
 
 } // namespace cppdlna::config
 
