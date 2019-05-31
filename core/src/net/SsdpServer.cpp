@@ -9,6 +9,7 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/asio.hpp>
+#include <cppdlna/upnp/Upnp.hpp>
 
 namespace asio = boost::asio;
 namespace ip = boost::asio::ip;
@@ -88,42 +89,43 @@ void SsdpServer::startAdvertise()
     // - one for each service type in each device
 
     http::request<http::empty_body> root1, root2, root3, emb1, emb2, svc;
-    std::string exp_str = config::get("ssdp.advertisement.age");
-    unsigned int exp_uint = std::stoul(exp_str);
+    unsigned int exp_uint = std::stoul(config::get("ssdp.advertisement.age"));
+    std::string uuid = upnp::getUuidString();
 
     root1.clear();
     root1.method(http::verb::notify);
     root1.target("*");
     // note -- newly constructed headers use HTTP/1.1 by default, so we don't need to set it here.
-    root1.set("CACHE-CONTROL", "max-age=" + exp_str);
+    root1.set("HOST",config::get("ssdp.multicast_address") + ":" + config::get("ssdp.port"));
+    root1.set("CACHE-CONTROL", "max-age=" + config::get("ssdp.advertisement.age"));
     root1.set("LOCATION", "[url for upnp description for root device]");
     root1.set("NT", "upnp:rootdevice");
     root1.set("NTS", "ssdp:alive");
-    root1.set("SERVER", "[OS/version] UPnP/2.0 [product/version]");
-    root1.set("USN", "uuid:[device-UUID]::upnp:rootdevice");
+    root1.set("SERVER", config::get("description.os_version") + " UPnP/2.0 " + config::get("description.product_version"));
+    root1.set("USN", "uuid:" + uuid + "::upnp:rootdevice");
     root1.set("BOOTID.UPNP.ORG", "[number increased each time device sends an initial announce or an update message]");
     root1.set("CONFIGID.UPNP.ORG", "[number used for caching description information]");
     root1.set("SEARCHPORT.UPNP.ORG", "[number identifies port on which device responds to unicast M-SEARCH]");
 
     root2 = root1;
-    root2.set("NT", "uuid:[device-UUID]");
-    root2.set("USN", "uuid:[device-UUID] (for root device UUID)");
+    root2.set("NT", "uuid:" + uuid);
+    root2.set("USN", "uuid:" + uuid);
 
     root3 = root1;
     root3.set("NT", "urn:schemas-upnp-org:device:[deviceType]:[ver]");
-    root3.set("USN", "uuid:[device-UUID]::urn:schemas-upnp-org:device:[deviceType]:[ver]");
+    root3.set("USN", "uuid:" + uuid + "::urn:schemas-upnp-org:device:[deviceType]:[ver]");
 
     emb1 = root1;
-    emb1.set("NT", "uuid:[device-UUID]");
-    emb1.set("USN", "uuid:[device-UUID]");
+    emb1.set("NT", "uuid:" + uuid);
+    emb1.set("USN", "uuid:" + uuid);
 
     emb2 = root1;
     emb2.set("NT", "urn:schemas-upnp-org:device:[deviceType]:[ver]");
-    emb2.set("USN", "uuid:[device-UUID]::urn:schemas-upnp-org:device:[deviceType]:[ver]");
+    emb2.set("USN", "uuid:" + uuid + "::urn:schemas-upnp-org:device:[deviceType]:[ver]");
 
     svc = root1;
     svc.set("NT", "urn:schemas-upnp-org:service:[serviceType]:[ver]");
-    svc.set("USN", "uuid:[device-UUID]::urn:schemas-upnp-org:service:[serviceType]:[ver]");
+    svc.set("USN", "uuid:" + uuid + "::urn:schemas-upnp-org:service:[serviceType]:[ver]");
 
     // initial announcements
     
