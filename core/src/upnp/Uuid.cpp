@@ -1,7 +1,9 @@
 #include <cppdlna/upnp/Uuid.hpp>
-#include <cppdlna/config/Config.hpp>
+#include <cppdlna/config/Configuration.hpp>
 #include <string>
 #include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace cppdlna::upnp {
 

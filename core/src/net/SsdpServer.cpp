@@ -9,7 +9,7 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/asio.hpp>
-#include <cppdlna/upnp/Upnp.hpp>
+#include <cppdlna/upnp/Uuid.hpp>
 
 namespace asio = boost::asio;
 namespace ip = boost::asio::ip;
