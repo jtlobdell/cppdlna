@@ -10,12 +10,12 @@
 #include <boost/beast/http.hpp>
 #include <boost/asio.hpp>
 #include <cppdlna/upnp/Uuid.hpp>
+#include <cppdlna/upnp/SystemInfo.hpp>
 
 namespace asio = boost::asio;
 namespace ip = boost::asio::ip;
 using udp = boost::asio::ip::udp;
 namespace http = boost::beast::http;
-
 
 namespace cppdlna::net {
 
@@ -101,7 +101,7 @@ void SsdpServer::startAdvertise()
     root1.set("LOCATION", "[url for upnp description for root device]");
     root1.set("NT", "upnp:rootdevice");
     root1.set("NTS", "ssdp:alive");
-    root1.set("SERVER", config::get("description.os_version") + " UPnP/2.0 " + config::get("description.product_version"));
+    root1.set("SERVER", upnp::get_os() + "/" + upnp::get_os_version() + " UPnP/2.0 " + config::get("description.product_version"));
     root1.set("USN", "uuid:" + uuid + "::upnp:rootdevice");
     root1.set("BOOTID.UPNP.ORG", "[number increased each time device sends an initial announce or an update message]");
     root1.set("CONFIGID.UPNP.ORG", "[number used for caching description information]");

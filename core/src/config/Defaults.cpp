@@ -18,7 +18,10 @@ std::map<std::string, std::string> defaults =
     {"ssdp.advertisement.initial_discoveries", "3"},
     {"ssdp.advertisement.initial_discoveries_spacing_ms", "200"},
 
-    {"description.os_version", "Linux/5.1.5"},
+    {"description.get_os_from_config", "false"},
+    // description.os --> expected in config if above is true
+    {"description.get_os_version_from_config", "false"},
+    // description.os_version --> expected in config if above is true    
     {"description.product_version", "cppdlna/0.1"},
 
     {"uuid.use_config", "false"}
